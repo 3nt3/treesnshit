@@ -1,3 +1,4 @@
+import java.net.*;
 import java.nio.file.*;
 import java.io.*;
 
@@ -46,7 +47,6 @@ public class Tree {
     public void readFile(String filePath) throws Exception {
         Gson gson = new Gson();
         try (Reader reader = new FileReader(filePath)) {
-            JsonParser parser = new JsonParser();
             JsonArray data = (gson.fromJson(reader, JsonArray.class));
             for (JsonElement b : data) {
                 int id = b.getAsJsonObject().get("id").getAsInt();
@@ -318,5 +318,64 @@ public class Tree {
                     "    child { " + tikzFrom(node.left) + " }" +
                     "    child { " + tikzFrom(node.right) + " }";
         }
+    }
+
+    public void compileTikZOnline(String code) {
+        try {
+            URL url = new URL("https://latex.ytotech.com/builds/sync?content="+ URLEncoder.encode(code));
+
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("accept", "application/pdf");
+
+            InputStream responseStream = connection.getInputStream();
+            byte[] bytes = responseStream.readAllBytes();
+
+            File file = File.createTempFile("tree", null);
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(bytes);
+            outputStream.flush();
+            outputStream.close();
+
+            Runtime.getRuntime().exec("xdg-open " + file.getAbsolutePath()).waitFor();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    /**
+     * Returns clockwise
+     * @param node Node from which to return
+     * @return Rotated node
+     */
+    public Node rotateRight(Node node) {
+        // not sure what to do in this case
+        if (node == null || node.right == null) return node;
+
+        Node temp = node.right;
+        node.right = node.right.left;
+        temp.left = node;
+
+        return temp;
+    }
+
+    /**
+     * Returns counterclockwise
+     * @param node Node from which to return
+     * @return Rotated node
+     */
+    public Node rotateLeft(Node node) {
+        // not sure what to do in this case
+        if (node == null || node.left == null) return node;
+
+        Node temp = node.left;
+        node.left = node.left.right;
+        temp.right = node;
+
+        return temp;
     }
 }

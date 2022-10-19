@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLauscher {
-    private Knopf ende, insert, draw, export, printAsc, printDesc, search, depth, printLevel, getNodeLevel, delete, tikz;
+    private Knopf ende, insert, draw, export, printAsc, printDesc, search, depth, printLevel, getNodeLevel, delete, tikz, rotateRight, rotateLeft;
     private ZahlenFeld id, searchId;
     private Stift stift;
     private TextFeld dateiName, value;
@@ -18,7 +18,6 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
     }
 
     public void initGui() {
-
         try {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
         } catch (ClassNotFoundException e) {
@@ -138,7 +137,8 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
             tree.delete(searchId.ganzZahl());
         } else if (k == tikz) {
             try {
-                tree.compileTikZ(tree.generateTikZ());
+//                tree.compileTikZ(tree.generateTikZ());
+                tree.compileTikZOnline(tree.generateTikZ());
             } catch (Exception e) {
                 System.out.format("error compiling: %s\n", e);
                 this.popUp("Error", e.toString());
