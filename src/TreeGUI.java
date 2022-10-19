@@ -4,7 +4,6 @@ import basis.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
 
 public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLauscher {
     private Knopf ende, insert, draw, export, printAsc, printDesc, search, depth, printLevel, getNodeLevel, delete, tikz;
@@ -103,7 +102,7 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
         try {
             tree.readFile("./test.json");
         } catch (Exception e) {
-            this.exceptionPopUp(e);
+            this.popUp("Error", e.toString());
         }
 
         tree.draw(0, l, stift, l.breite(), l.hoehe());
@@ -119,7 +118,7 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
                 id.setzeText("");
                 value.setzeText("");
             } catch (Exception e) {
-                this.exceptionPopUp(e);
+                this.popUp("Error", e.toString());
             }
         } else if (k == export) {
             tree.save(dateiName.text());
@@ -142,15 +141,16 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
                 tree.compileTikZ(tree.generateTikZ());
             } catch (Exception e) {
                 System.out.format("error compiling: %s\n", e);
+                this.popUp("Error", e.toString());
             }
         }
         tree.draw(0, l, stift, l.breite(), l.hoehe());
     }
 
-    private void exceptionPopUp(Exception e) {
-        JFrame f = new JFrame("Error");
+    private void popUp(String title, String content) {
+        JFrame f = new JFrame(title);
         JPanel panel = new JPanel();
-        JLabel label = new JLabel("Error: " + e.toString());
+        JLabel label = new JLabel(title + ": " + content);
         panel.add(label);
         panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         f.add(panel);
