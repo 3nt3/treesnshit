@@ -4,9 +4,10 @@ import basis.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
 
 public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLauscher {
-    private Knopf ende, insert, draw, export, printAsc, printDesc, search, depth, printLevel, getNodeLevel, delete;
+    private Knopf ende, insert, draw, export, printAsc, printDesc, search, depth, printLevel, getNodeLevel, delete, tikz;
     private ZahlenFeld id, searchId;
     private Stift stift;
     private TextFeld dateiName, value;
@@ -39,11 +40,7 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
         BeschriftungsFeld label1 = new BeschriftungsFeld("TreeDemo 木", 10, 10, 580, 30);
 
         int columnWidth = 180;
-        export = new Knopf("Export", 10, 510, columnWidth, 30);
-        export.setzeKnopfLauscher(this);
 
-        dateiName = new TextFeld(10, 540, columnWidth, 30);
-        dateiName.setzeText("Path");
 
         printAsc = new Knopf("Print Asc", 10, 310, columnWidth, 30);
         printAsc.setzeKnopfLauscher(this);
@@ -67,18 +64,27 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
         delete = new Knopf("Delete", 10, 90, columnWidth, 30);
         delete.setzeKnopfLauscher(this);
 
+        dateiName = new TextFeld(10, 510, columnWidth, 30);
+        dateiName.setzeText("Path");
+
+        export = new Knopf("Export", 10, 540, columnWidth, 30);
+        export.setzeKnopfLauscher(this);
+
+        tikz = new Knopf("Generate TikZ", 10, 620, columnWidth, 30);
+        tikz.setzeKnopfLauscher(this);
+
         stift = new Stift();
 
 
-        new BeschriftungsFeld("Value", 10, 380, columnWidth, 30);
-        value = new TextFeld(10, 410, columnWidth, 30);
+        new BeschriftungsFeld("Value", 10, 340, columnWidth, 30);
+        value = new TextFeld(10, 340+30, columnWidth, 30);
 
-        new BeschriftungsFeld("ID", 10, 440, columnWidth, 30);
-        id = new ZahlenFeld(10, 470, columnWidth, 30);
-        id.setzeText("adf");
+        new BeschriftungsFeld("ID", 10, 340+2*30, columnWidth, 30);
+        id = new ZahlenFeld(10, 340+3*30, columnWidth, 30);
 
-        insert = new Knopf("Insert", 10, 350, columnWidth, 30);
+        insert = new Knopf("Insert", 10, 340+4*30, columnWidth, 30);
         insert.setzeKnopfLauscher(this);
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // CANVAS
@@ -94,11 +100,13 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         tree = new Tree();
-        tree.readFile("./test.json");
+        try {
+            tree.readFile("./test.json");
+        } catch (Exception e) {
+            this.exceptionPopUp(e);
+        }
 
         tree.draw(0, l, stift, l.breite(), l.hoehe());
-
-        System.out.println(tree.generateTikZ());
     }
 
     @Override
@@ -106,7 +114,13 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
         if (k == ende) {
             this.gibFrei();
         } else if (k == insert) {
-            tree.insert(new Content(id.ganzZahl(), value.text()));
+            try {
+                tree.insert(new Content(id.ganzZahl(), value.text()));
+                id.setzeText("");
+                value.setzeText("");
+            } catch (Exception e) {
+                this.exceptionPopUp(e);
+            }
         } else if (k == export) {
             tree.save(dateiName.text());
         } else if (k == printAsc) {
@@ -123,8 +137,25 @@ public class TreeGUI extends Fenster implements KnopfLauscher, ListAuswahlLausch
             tree.printLevel(searchId.ganzZahl());
         } else if (k == delete) {
             tree.delete(searchId.ganzZahl());
+        } else if (k == tikz) {
+            try {
+                tree.compileTikZ(tree.generateTikZ());
+            } catch (Exception e) {
+                System.out.format("error compiling: %s\n", e);
+            }
         }
         tree.draw(0, l, stift, l.breite(), l.hoehe());
+    }
+
+    private void exceptionPopUp(Exception e) {
+        JFrame f = new JFrame("Error");
+        JPanel panel = new JPanel();
+        JLabel label = new JLabel("Error: " + e.toString());
+        panel.add(label);
+        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        f.add(panel);
+        f.pack();
+        f.setVisible(true);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.google.gson.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.*;
 
 import basis.*;
 
@@ -17,17 +18,17 @@ public class Tree {
     }
 
     // Insert
-    private Node insertAt(Node node, Content content) {
+    private Node insertAt(Node node, Content content) throws Exception {
         if (node == null) node = new Node(content);
         else {
             if (content.id < node.getContent().id) node.left = insertAt(node.left, content);
             if (content.id > node.getContent().id) node.right = insertAt(node.right, content);
-            if (content.id == node.getContent().id) System.out.println("mach ich nicht");
+            if (content.id == node.getContent().id) throw new Exception("The given id already exists in tree");
         }
         return node;
     }
 
-    public void insert(Content content) {
+    public void insert(Content content) throws Exception {
         root = insertAt(root, content);
     }
 
@@ -42,7 +43,7 @@ public class Tree {
     }
 
     // Datei lesen
-    public void readFile(String filePath) {
+    public void readFile(String filePath) throws Exception {
         Gson gson = new Gson();
         try (Reader reader = new FileReader(filePath)) {
             JsonParser parser = new JsonParser();
@@ -237,7 +238,7 @@ public class Tree {
         return getLevelFrom(node.right, id, level + 1);
     }
 
-    public void fromFile(String fileName) throws IOException {
+    public void fromFile(String fileName) throws Exception {
         Reader reader = Files.newBufferedReader(Paths.get(fileName));
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -269,7 +270,10 @@ public class Tree {
                 " \n" +
                 "\\begin{document}\n" +
                 " \n" +
-                "\\begin{tikzpicture}\n");
+                "\\begin{tikzpicture}[sibling distance=3cm]\n" +
+                "  \\tikzstyle{level 1}=[sibling distance=30mm]\n" +
+                "  \\tikzstyle{level 2}=[sibling distance=20mm]\n" +
+                "  \\tikzstyle{level 3}=[sibling distance=10mm]\n");
 
         stringBuilder.append("\\");
         stringBuilder.append(tikzFrom(this.root));
@@ -281,6 +285,23 @@ public class Tree {
                         "\\end{document}");
 
         return stringBuilder.toString();
+    }
+
+    public void compileTikZ(String code) throws IOException, InterruptedException {
+        // file path without suffix
+        String rootPath = "/tmp/tree_generated";
+
+        FileWriter fileWriter = new FileWriter(rootPath + ".tex");
+        fileWriter.write(code);
+        fileWriter.flush();
+        fileWriter.close();
+
+        Runtime.getRuntime().exec("rm " + rootPath + ".pdf").waitFor();
+        Process pr = Runtime.getRuntime().exec(String.format("pdflatex -output-directory=/tmp %s", rootPath + ".tex"));
+        pr.waitFor();
+
+
+        Runtime.getRuntime().exec(String.format("xdg-open %s", rootPath + ".pdf")).waitFor();
     }
 
     private String tikzFrom(Node node) {
